@@ -39,35 +39,17 @@ void handler() {
   }
 }
 
-/*
-template<typename T>
-class optional {
-  private:
-    char[sizeof(T)] data_;
-  public:
-    template<Args... args>
-    void emplace(Args... args) {
-      new (static_cast<T>(data_)) (std::forward<Args>(args...));
-    }
-
-    void reset() {
-      static_cast<T>(data_).~T();
-    }
-}
-*/
-
-template<uint8_t led_pin, uint8_t servo_pin, uint8_t lower_angle, uint8_t upper_angle>
 class ExampleDataHandler: public DataHandlerInterface {
 public:
-  uint8_t address_;
+  const uint8_t address_;
+  const uint8_t servo_pin;
+  uint8_t red_angle;
+  uint8_t green_angle;
   Servo servo_;
   int servo_pos;
 
-  ExampleDataHandler(uint8_t address): address_(address), servo_pos(lower_angle) {
-    pinMode(led_pin, OUTPUT);
-    pinMode(servo_pin, OUTPUT);
-    digitalWrite(led_pin, LOW);
-  //init();
+  ExampleDataHandler(uint8_t address, uint8_t servo_pin, uint8_t red_angle, uint8_t green_angle):
+  address_(address), servo_pin(servo_pin), red_angle(red_angle), green_angle(green_angle), servo_pos(green_angle) {
   }
 
   void init() {
@@ -78,7 +60,7 @@ public:
 
   void handleEvent(unsigned char address, unsigned char data) override {
     if (address == address_) {
-      Serial.print(F("ExampleDataHandler ("));
+      Serial.print(F("ServoHandler ("));
       Serial.print(address_, DEC);
       Serial.print(F(") received data: 0x"));
       Serial.println(data, HEX);
@@ -94,11 +76,9 @@ public:
   void setLed(uint8_t data) {
     data = data & 0x02;
     if (data) {
-      digitalWrite(led_pin, HIGH);
-      servo_pos = upper_angle;
+      servo_pos = red_angle;
     } else {
-      digitalWrite(led_pin, LOW);
-      servo_pos = lower_angle;
+      servo_pos = green_angle;
     }
     updateServo();
   }
@@ -108,9 +88,17 @@ public:
   }
 };
 
-ExampleDataHandler<13, 9, 70, 120> dataHandler(1);
+constexpr uint8_t kNumDataHandlers = 6;
+uint8_t servo_index;
 
-unsigned long int lastTimeMillis = 0;
+ExampleDataHandler handlers[kNumDataHandlers] = {
+  ExampleDataHandler(1, 9, 80, 120), // Old: (70..105..140)
+  ExampleDataHandler(2, 10, 70, 110),
+  ExampleDataHandler(3, 11, 70, 140),
+  ExampleDataHandler(4, A5, 70, 140),
+  ExampleDataHandler(5, A6, 70, 140),
+  ExampleDataHandler(6, A7, 70, 140)
+};
 
 //The setup function is called once at startup of the sketch
 void setup() {
@@ -125,8 +113,22 @@ void setup() {
   //Use CHANGE instead and do a fast read in the interrupt handler
   //to tell leading from trailing edges!
 
-  decoder.addHandler(&dataHandler);
-  dataHandler.init();
+  for (uint8_t i = 0; i < kNumDataHandlers; ++i) {
+    handlers[i].init();
+    decoder.addHandler(&handlers[i]);
+  }
+  servo_index = kNumDataHandlers;
+  dumpServos();
+}
+
+void dumpServos() {
+  for (uint8_t i = 0; i < kNumDataHandlers; ++i) {
+    Serial.print(", Servo ");
+    Serial.print(i+1, DEC);
+    Serial.print(": ");
+    Serial.print(handlers[i].servo_pos, DEC);
+  }
+  Serial.println(".");
 }
 
 String readString;
@@ -146,17 +148,44 @@ void loop() {
     decoder.decodeDatagram(datagram);
   }
 
-  Serial.write("Read String: '");
-  Serial.print(readString);
-  Serial.write("', Servo: ");
-  Serial.println(dataHandler.servo_pos);
   //Serial.write("\n");
   if (Serial.available() > 0) {
     char c = Serial.read();
+
     if (c == '\n') {
-      dataHandler.servo_pos = readString.toInt();
-      dataHandler.updateServo();
+      Serial.write("Read String: '");
+      Serial.print(readString);
+      
+      int value = readString.toInt();
+
+      if (servo_index == kNumDataHandlers) {
+        // No servo selected
+        if (value <= kNumDataHandlers) {
+          // Switch to servo control mode
+          servo_index = value - 1;
+        }
+      } else {
+        // Servo selected
+        if (value > 180) {
+          // Invalid servo angle, switch to no-servo-selected mode
+          servo_index = kNumDataHandlers;
+        } else {
+          handlers[servo_index].servo_pos = value;
+          handlers[servo_index].updateServo();
+        }
+      }
+      
+      Serial.write("', Servo ");
+      Serial.print(servo_index + 1, DEC);
+      Serial.write(" at position ");
+      if (servo_index < kNumDataHandlers) {
+        Serial.println(handlers[servo_index].servo_pos, DEC);
+      } else {
+        Serial.println("N/A.");
+      }
+      
       readString = "";
+      dumpServos();
     } else {
       readString += c;
     }
