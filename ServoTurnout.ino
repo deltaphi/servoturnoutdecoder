@@ -41,44 +41,71 @@ void handler() {
 
 class ExampleDataHandler: public DataHandlerInterface {
 public:
-  const uint8_t address_;
+  const uint16_t address_;
   const uint8_t servo_pin;
   uint8_t red_angle;
   uint8_t green_angle;
   Servo servo_;
   int servo_pos;
 
-  ExampleDataHandler(uint8_t address, uint8_t servo_pin, uint8_t red_angle, uint8_t green_angle):
+  ExampleDataHandler(uint16_t address, uint8_t servo_pin, uint8_t red_angle, uint8_t green_angle):
   address_(address), servo_pin(servo_pin), red_angle(red_angle), green_angle(green_angle), servo_pos(green_angle) {
   }
 
   void init() {
-    // TODO: Set PWM to 20ms
     servo_.attach(servo_pin);
     updateServo();
   }
 
-  void handleEvent(unsigned char address, unsigned char data) override {
-    if (address == address_) {
-      Serial.print(F("ServoHandler ("));
-      Serial.print(address_, DEC);
-      Serial.print(F(") received data: 0x"));
-      Serial.println(data, HEX);
-      // 0x02 = green
-      // 0x00 = read
-      // 0x10 = user pressed button
-      // 0x00 = user released button
+  /**
+   * \brief Handle a MM message
+   * 
+   * \param address The address of the turnout decoder
+   * \param data The addres of the Turnout (bits 0..3) and the key press mode (bit 4)
+   * 
+   * address is the address of a turnout decoder (switch address div 4) -> Not actually hepful? (Range: 0x1..0x4F, 0 -> Wraps around!) 0x1F is relevant
+   * data contains several bits: 7 6 5 4 3 2 1 0
+   *   7..5 appear to be unused
+   *   4 is key pressed (set)/released (cleared)
+   *   3..0 are a turnout address. Even numbers are red, odd numbers are green
+   */
+  void handleEvent(unsigned char decoder_address, unsigned char data) override {
+    uint8_t pressed = data & 0x10;
 
-      setLed(data);
+    if (pressed) {
+      char buf[24];
+      uint8_t gerade = (data & 0x02);
+      data &= 0x0F;
+      data >>= 2;
+
+      uint16_t turnout_address = (static_cast<uint16_t>(decoder_address) << 2) | data;
+      if (decoder_address == 0) {
+        turnout_address += 320;
+      }
+      turnout_address -= 3;
+    
+      if (turnout_address == address_) {
+        Serial.print(F("Turnout "));
+        Serial.print(turnout_address, DEC);
+        Serial.print(F(" set to "));
+        if (gerade) {
+          Serial.print(F(" green"));
+        } else {
+          Serial.print(F(" red"));
+        }
+        Serial.println();
+
+        setLed(gerade);
+      }
     }
   }
 
   void setLed(uint8_t data) {
-    data = data & 0x02;
+    //data = data & 0x02;
     if (data) {
-      servo_pos = red_angle;
-    } else {
       servo_pos = green_angle;
+    } else {
+      servo_pos = red_angle;
     }
     updateServo();
   }
@@ -139,13 +166,14 @@ void loop() {
   if (detector.available()) {
     unsigned char* datagram = detector.getCurrentDatagram();
 
-
-    Serial.print("Received Data:");
+/*
+    Serial.print(F("Received Data: 0x"));
     for (int i = 0; i < 18; i++) {
-      Serial.print((int) datagram[i]);
+      Serial.print((int) datagram[i], HEX);
+      Serial.print(" ");
     }
     Serial.println();
-
+*/
     decoder.decodeDatagram(datagram);
   }
 
