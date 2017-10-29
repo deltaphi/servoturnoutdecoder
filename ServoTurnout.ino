@@ -1,23 +1,8 @@
-#include <Servo.h>
+#include <MobaTools.h>
 
 #include <DataHandlerInterface.h>
 #include <Decoder145027.h>
 #include <Detect145027.h>
-#include <ProgrammableTurnoutDataHandler.h>
-#include <ProgrammableTurnoutDataHandlerNormalState.h>
-#include <ProgrammableTurnoutDataHandlerProgState.h>
-#include <ProgrammableTurnoutDataHandlerStateInterface.h>
-#include <TurnOutDataHandler.h>
-
-
-/*
- * 2013-03-31: Ulrich Schwenk
- * You may use this software under the terms of LGPLv3 or any newer version of the LGPL.
- */
-
-
-//#include <avr/io.h>
-//#include <math.h>
 
 //Globally create a detector.
 Detect145027 detector(Detect145027::TURNOUT_NOMINAL_PULSE_WIDTH_MICROS);
@@ -45,7 +30,7 @@ public:
   const uint8_t servo_pin;
   uint8_t red_angle;
   uint8_t green_angle;
-  Servo servo_;
+  Servo8 servo_;
   int servo_pos;
 
   ExampleDataHandler(uint16_t address, uint8_t servo_pin, uint8_t red_angle, uint8_t green_angle):
@@ -53,8 +38,9 @@ public:
   }
 
   void init() {
-    servo_.attach(servo_pin);
-    updateServo();
+    servo_.attach(servo_pin, true);
+    servo_.setSpeed(10);
+    //updateServo();
   }
 
   /**
