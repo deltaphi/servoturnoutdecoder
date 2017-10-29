@@ -91,13 +91,14 @@ public:
 constexpr uint8_t kNumDataHandlers = 6;
 uint8_t servo_index;
 
+// addr, pin, red, green
 ExampleDataHandler handlers[kNumDataHandlers] = {
   ExampleDataHandler(1, 9, 80, 120), // Old: (70..105..140)
-  ExampleDataHandler(2, 10, 70, 110),
-  ExampleDataHandler(3, 11, 70, 140),
-  ExampleDataHandler(4, A5, 70, 140),
-  ExampleDataHandler(5, A6, 70, 140),
-  ExampleDataHandler(6, A7, 70, 140)
+  ExampleDataHandler(2, 10, 70, 110), // done
+  ExampleDataHandler(3, 11, 60, 125), // done
+  ExampleDataHandler(4, A5, 50, 100), // done
+  ExampleDataHandler(5, A4, 90, 140),
+  ExampleDataHandler(6, A3, 70, 140)  // N/A
 };
 
 //The setup function is called once at startup of the sketch
