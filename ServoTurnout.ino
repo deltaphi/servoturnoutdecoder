@@ -24,6 +24,8 @@ void handler() {
   }
 }
 
+constexpr long kRelayOnDuration_ms = 20; 
+
 class ExampleDataHandler: public DataHandlerInterface {
 public:
   const uint16_t address_;
@@ -33,14 +35,42 @@ public:
   Servo8 servo_;
   int servo_pos;
 
+  uint8_t polarize_red_pin;
+  uint8_t polarize_green_pin;
+
+  bool active = false;
+  unsigned long lastActionTime;
+
+  enum TurnoutDirectionType {
+    RED, GREEN
+  };
+  
+  ExampleDataHandler(uint16_t address, uint8_t servo_pin, uint8_t red_angle, uint8_t green_angle, uint8_t polarize_red_pin, uint8_t polarize_green_pin):
+    address_(address), servo_pin(servo_pin), 
+    red_angle(red_angle), green_angle(green_angle),
+    servo_pos(green_angle),
+    polarize_red_pin(polarize_red_pin), polarize_green_pin(polarize_green_pin) {
+  }
+
   ExampleDataHandler(uint16_t address, uint8_t servo_pin, uint8_t red_angle, uint8_t green_angle):
-  address_(address), servo_pin(servo_pin), red_angle(red_angle), green_angle(green_angle), servo_pos(green_angle) {
+  address_(address), servo_pin(servo_pin),
+  red_angle(red_angle), green_angle(green_angle),
+  servo_pos(green_angle),
+  polarize_red_pin(255), polarize_green_pin(255) {
   }
 
   void init() {
     servo_.attach(servo_pin, true);
     servo_.setSpeed(10);
     //updateServo();
+    if (polarize_red_pin != 255) {
+      pinMode(polarize_red_pin, OUTPUT);
+      digitalWrite(polarize_red_pin, LOW);
+    }
+    if (polarize_green_pin != 255) {
+      pinMode(polarize_green_pin, OUTPUT);
+      digitalWrite(polarize_green_pin, LOW);
+    }
   }
 
   /**
@@ -90,14 +120,58 @@ public:
     //data = data & 0x02;
     if (data) {
       servo_pos = green_angle;
+      polarize(RED);
     } else {
       servo_pos = red_angle;
+      polarize(GREEN);
     }
     updateServo();
   }
 
+  void polarize(TurnoutDirectionType dir) {
+    if (dir == RED) {
+      if (polarize_green_pin != 255) {
+        Serial.println(F(" Polarize GREEN LOW"));
+        digitalWrite(polarize_green_pin, LOW);
+      }
+      if (polarize_red_pin != 255) {
+        Serial.println(F(" Polarize RED HIGH"));
+        digitalWrite(polarize_red_pin, HIGH);
+      }
+    } else {
+      if (polarize_red_pin != 255) {
+        Serial.println(F(" Polarize RED LOW"));
+        digitalWrite(polarize_red_pin, LOW);
+      }
+      if (polarize_green_pin != 255) {
+        Serial.println(F(" Polarize GREEN HIGH"));
+        digitalWrite(polarize_green_pin, HIGH);
+      }
+    }
+    lastActionTime = millis();
+    active = true;
+  }
+
   void updateServo() {
     servo_.write(servo_pos);
+  }
+
+  void checkTimeout() {
+    unsigned long now = millis();
+    if (active && (now - lastActionTime) >= kRelayOnDuration_ms) {
+      handleTimeout();
+    }
+  }
+
+  void handleTimeout() {
+    Serial.println(F("Timeout"));
+    active = false;
+    if (polarize_red_pin != 255) {
+      digitalWrite(polarize_red_pin, LOW);
+    }
+    if (polarize_green_pin != 255) {
+      digitalWrite(polarize_green_pin, LOW);
+    }
   }
 };
 
@@ -109,8 +183,8 @@ ExampleDataHandler handlers[kNumDataHandlers] = {
   ExampleDataHandler(1, 9, 75, 120), // Old: (70..105..140)
   ExampleDataHandler(2, 10, 55, 110), // done
   ExampleDataHandler(3, 11, 70, 140), // done
-  ExampleDataHandler(4, A5, 40, 100), // done
-  ExampleDataHandler(5, A4, 90, 150),
+  ExampleDataHandler(4, A5, 40, 100, 7, 8), // done
+  ExampleDataHandler(5, A4, 90, 150, 5, 6),
   ExampleDataHandler(6, A3, 70, 140)  // N/A
 };
 
@@ -178,6 +252,16 @@ void loop() {
         if (value <= kNumDataHandlers) {
           // Switch to servo control mode
           servo_index = value - 1;
+        } else {
+          // Explicit turnout toggle mode. Addresses are 11/12, 21/22, 31/32, 41/42, 51/52, 61/62
+          // odd is green
+          uint8_t turnout = value / 10;
+          if (0 < turnout && turnout <= kNumDataHandlers) {
+            turnout -= 1;
+
+           uint8_t gerade = value % 2;
+           handlers[turnout].setLed(gerade);
+          }
         }
       } else {
         // Servo selected
@@ -206,40 +290,8 @@ void loop() {
     }
   }
 
-  //dataHandler.handleTimeouts();
+  for (uint8_t i = 0; i < kNumDataHandlers; ++i) {
+    handlers[i].checkTimeout();
+  }
 
 }
-
-/*
-void moveServo(int destination) {
-  bool dir = (destination > pos);
-
-  // start by skipping 20 steps
-  if (dir) {
-    pos += 20;
-  } else {
-    pos -= 20;
-  }
-  
-  int startPos = pos;
-  long startTime = millis();
-  //long maxTime = abs(destination - pos) * kMsPerStep;
-  long delta_time = 0;
-
-  while (
-    (dir && pos < destination) || (!dir && pos > destination)
-    ) {
-    // randomly expect an iteration to be 10ms
-    long now = millis();
-    delta_time = now - startTime;
-    int delta_steps = delta_time / kMsPerStep;
-    if (dir) {
-    pos = startPos + delta_steps;
-    } else {
-      pos = startPos - delta_steps;
-    }
-    myservo.write(pos);
-  }
-  
-  pos = destination;
-}*/
