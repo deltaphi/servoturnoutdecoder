@@ -178,19 +178,19 @@ public:
 constexpr uint8_t kNumDataHandlers = 6;
 uint8_t servo_index;
 
-/* Left board
+/* Left board */
 // addr, pin, red, green
 ExampleDataHandler handlers[kNumDataHandlers] = {
-  ExampleDataHandler(1, 9, 75, 120), // Old: (70..105..140)
-  ExampleDataHandler(2, 10, 55, 110), // done
-  ExampleDataHandler(3, 11, 70, 140), // done
-  ExampleDataHandler(4, A5, 40, 100, 5, 6), // done
-  ExampleDataHandler(5, A4, 85, 150, 7, 8),
-  ExampleDataHandler(6, A3, 70, 140)  // N/A
+  ExampleDataHandler(100, 9, 75, 120), // done
+  ExampleDataHandler(101, 10, 55, 110), // done
+  ExampleDataHandler(102, 11, 50, 125), // done
+  ExampleDataHandler(103, A5, 40, 100, 5, 6), // done
+  ExampleDataHandler(104, A4, 85, 150, 7, 8),
+  ExampleDataHandler(105, A3, 70, 140)  // N/A
 };
 /**/
 
-/* Right board */
+/* Right board
 // addr, pin, red, green
 ExampleDataHandler handlers[kNumDataHandlers] = {
   ExampleDataHandler(109, 9, 30, 120), // Old: (70..105..140)   - Turnout 9
