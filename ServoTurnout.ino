@@ -193,12 +193,12 @@ ExampleDataHandler handlers[kNumDataHandlers] = {
 /* Right board */
 // addr, pin, red, green
 ExampleDataHandler handlers[kNumDataHandlers] = {
-  ExampleDataHandler(1, 9, 75, 120), // Old: (70..105..140)
-  ExampleDataHandler(2, 10, 55, 110), // done
-  ExampleDataHandler(3, 11, 70, 140), // done
-  ExampleDataHandler(4, A5, 40, 100, 5, 6), // done
-  ExampleDataHandler(5, A4, 85, 150, 7, 8),
-  ExampleDataHandler(6, A3, 70, 140)  // N/A
+  ExampleDataHandler(109, 9, 30, 120), // Old: (70..105..140)   - Turnout 9
+  ExampleDataHandler(2, 10, 55, 110), // pin broken
+  ExampleDataHandler(106, 11, 45, 100), // done                 - Turnout 6
+  ExampleDataHandler(107, A5, 105, 60, 5, 6), // done           - Turnout 7
+  ExampleDataHandler(108, A4, 60, 120, 7, 8), // done           - Turnout 8
+  ExampleDataHandler(110, A3, 100, 50)  // done                - Turnout 10
 };
 /**/
 
