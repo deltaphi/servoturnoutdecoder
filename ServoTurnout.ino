@@ -41,6 +41,8 @@ public:
   bool active = false;
   unsigned long lastActionTime;
 
+  constexpr static uint8_t kServoSpeed = 10;
+
   enum TurnoutDirectionType {
     RED, GREEN
   };
@@ -61,7 +63,7 @@ public:
 
   void init() {
     servo_.attach(servo_pin, true);
-    servo_.setSpeed(10);
+    servo_.setSpeed(kServoSpeed);
     //updateServo();
     if (polarize_red_pin != 255) {
       pinMode(polarize_red_pin, OUTPUT);
@@ -193,12 +195,12 @@ ExampleDataHandler handlers[kNumDataHandlers] = {
 /* Right board
 // addr, pin, red, green
 ExampleDataHandler handlers[kNumDataHandlers] = {
-  ExampleDataHandler(109, 9, 30, 120), // Old: (70..105..140)   - Turnout 9
+  ExampleDataHandler(109, 9, 30, 115), // done   - Turnout 9
   ExampleDataHandler(2, 10, 55, 110), // pin broken
-  ExampleDataHandler(106, 11, 45, 100), // done                 - Turnout 6
+  ExampleDataHandler(106, 11, 50, 100), // done                 - Turnout 6
   ExampleDataHandler(107, A5, 105, 60, 5, 6), // done           - Turnout 7
   ExampleDataHandler(108, A4, 60, 120, 7, 8), // done           - Turnout 8
-  ExampleDataHandler(110, A3, 100, 50)  // done                - Turnout 10
+  ExampleDataHandler(110, A3, 110, 50)  // done                - Turnout 10
 };
 /**/
 
