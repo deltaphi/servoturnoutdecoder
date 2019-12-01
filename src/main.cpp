@@ -1,3 +1,5 @@
+#include <Arduino.h>
+
 #include <MobaTools.h>
 
 #include <DataHandlerInterface.h>
@@ -7,6 +9,8 @@
 //Globally create a detector.
 Detect145027 detector(Detect145027::TURNOUT_NOMINAL_PULSE_WIDTH_MICROS);
 Decoder145027 decoder;
+
+void dumpServos();
 
 void handler() {
 

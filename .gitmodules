@@ -1,0 +1,6 @@
+[submodule "lib/MobaTools"]
+	path = lib/MobaTools
+	url = https://github.com/MicroBahner/MobaTools/
+[submodule "lib/LibMotorola"]
+	path = lib/LibMotorola
+	url = https://github.com/sfxsfl/LibMotorola
