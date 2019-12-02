@@ -1,24 +1,12 @@
 #include "ExampleDataHandler.h"
 
 
-  ExampleDataHandler::ExampleDataHandler(uint16_t address, uint8_t servo_pin, uint8_t red_angle, uint8_t green_angle, uint8_t polarize_red_pin, uint8_t polarize_green_pin):
-    address_(address), servo_pin(servo_pin), 
-    red_angle(red_angle), green_angle(green_angle),
-    servo_pos(green_angle),
-    polarize_red_pin(polarize_red_pin), polarize_green_pin(polarize_green_pin) {
+  ExampleDataHandler::ExampleDataHandler(uint16_t address, uint8_t polarize_red_pin, uint8_t polarize_green_pin):
+    address_(address), polarize_red_pin(polarize_red_pin), polarize_green_pin(polarize_green_pin) {
   }
 
-  ExampleDataHandler::ExampleDataHandler(uint16_t address, uint8_t servo_pin, uint8_t red_angle, uint8_t green_angle):
-  address_(address), servo_pin(servo_pin),
-  red_angle(red_angle), green_angle(green_angle),
-  servo_pos(green_angle),
-  polarize_red_pin(255), polarize_green_pin(255) {
-  }
 
   void ExampleDataHandler::init() {
-    servo_.attach(servo_pin, true);
-    servo_.setSpeed(kServoSpeed);
-    //updateServo();
     if (polarize_red_pin != 255) {
       pinMode(polarize_red_pin, OUTPUT);
       digitalWrite(polarize_red_pin, LOW);
@@ -74,13 +62,10 @@
   void ExampleDataHandler::setLed(uint8_t data) {
     //data = data & 0x02;
     if (data) {
-      servo_pos = green_angle;
       polarize(RED);
     } else {
-      servo_pos = red_angle;
       polarize(GREEN);
     }
-    updateServo();
   }
 
   void ExampleDataHandler::polarize(TurnoutDirectionType dir) {
@@ -105,10 +90,6 @@
     }
     lastActionTime = millis();
     active = true;
-  }
-
-  void ExampleDataHandler::updateServo() {
-    servo_.write(servo_pos);
   }
 
   void ExampleDataHandler::checkTimeout() {
