@@ -5,13 +5,13 @@
 
 #include <DataHandlerInterface.h>
 
-constexpr long kRelayOnDuration_ms = 20; 
+constexpr long kRelayOnDuration_ms = 20;
 
 /*
  * \brief Class ExampleDataHandler
- */    
-class ExampleDataHandler: public DataHandlerInterface {
-public:
+ */
+class ExampleDataHandler : public DataHandlerInterface {
+ public:
   const uint16_t address_;
 
   uint8_t polarize_red_pin;
@@ -20,11 +20,10 @@ public:
   bool active = false;
   unsigned long lastActionTime;
 
-  enum TurnoutDirectionType {
-    RED, GREEN
-  };
+  enum TurnoutDirectionType { RED, GREEN };
 
-  ExampleDataHandler(uint16_t address, uint8_t polarize_red_pin, uint8_t polarize_green_pin);
+  ExampleDataHandler(uint16_t address, uint8_t polarize_red_pin,
+                     uint8_t polarize_green_pin);
   void init();
   void handleEvent(unsigned char decoder_address, unsigned char data) override;
   void setLed(uint8_t data);
@@ -32,7 +31,6 @@ public:
   void updateServo();
   void checkTimeout();
   void handleTimeout();
-  
 };
 
 #endif  // __EXAMPLEDATAHANDLER_H__
