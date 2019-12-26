@@ -3,7 +3,7 @@
 #include <Decoder145027.h>
 #include <Detect145027.h>
 
-#include "ExampleDataHandler.h"
+#include "MotorDataHandler.h"
 
 // Globally create a detector.
 Detect145027 detector(Detect145027::TURNOUT_NOMINAL_PULSE_WIDTH_MICROS);
@@ -24,11 +24,15 @@ void handler() {
   }
 }
 
-constexpr uint8_t kNumDataHandlers = 2;
+// constexpr uint8_t kNumDataHandlers = 2;
 
 // addr, red, green
-ExampleDataHandler handlers[kNumDataHandlers] = {ExampleDataHandler(103, 5, 6),
-                                                 ExampleDataHandler(104, 7, 8)};
+// ExampleDataHandler handlers[kNumDataHandlers] = {ExampleDataHandler(103, 5,
+// 6),
+//                                                 ExampleDataHandler(104, 7,
+//                                                 8)};
+
+MotorDataHandler dataHandler;
 
 // The setup function is called once at startup of the sketch
 void setup() {
@@ -43,10 +47,15 @@ void setup() {
   // Use CHANGE instead and do a fast read in the interrupt handler
   // to tell leading from trailing edges!
 
-  for (uint8_t i = 0; i < kNumDataHandlers; ++i) {
-    handlers[i].init();
-    decoder.addHandler(&handlers[i]);
-  }
+  // for (uint8_t i = 0; i < kNumDataHandlers; ++i) {
+  //  handlers[i].init();
+  //  decoder.addHandler(&handlers[i]);
+  //}
+
+  // motor 1, motor 2, relay high, relay low
+  dataHandler.setPins(9, 10, 11, A3);
+  dataHandler.setAddress(103, 104);
+  decoder.addHandler(&dataHandler);
 }
 
 // The loop function is called in an endless loop
@@ -65,7 +74,9 @@ void loop() {
     decoder.decodeDatagram(datagram);
   }
 
-  for (uint8_t i = 0; i < kNumDataHandlers; ++i) {
-    handlers[i].checkTimeout();
-  }
+  dataHandler.checkTimeout();
+
+  //  for (uint8_t i = 0; i < kNumDataHandlers; ++i) {
+  //    handlers[i].checkTimeout();
+  //  }
 }
