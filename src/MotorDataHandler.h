@@ -17,7 +17,7 @@ class MotorDataHandler : public DataHandlerInterface {
   static constexpr const Pin_t kNoPin = 255;
 
   static constexpr const Pwm_t kPwmOff = 0;
-  static constexpr const Pwm_t kPwmSlow = 200;
+  static constexpr const Pwm_t kPwmSlow = 180;
   static constexpr const Pwm_t kPwmFull = 255;
   static constexpr const unsigned int kLowSpeedTimeout = 4000;
 

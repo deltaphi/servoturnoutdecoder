@@ -27,15 +27,15 @@ void MotorDataHandler::setSpeed(Speed_t newSpeed) {
   switch (newSpeed) {
     case Speed_t::OFF:
       highValue = kPwmOff;
-      relayValue = LOW;
+      relayValue = HIGH;
       break;
     case Speed_t::SLOW:
       highValue = kPwmSlow;
-      relayValue = LOW;
+      relayValue = HIGH;
       break;
     case Speed_t::FULL:
       highValue = kPwmFull;
-      relayValue = HIGH;
+      relayValue = LOW;
       break;
   }
 
@@ -62,6 +62,13 @@ void MotorDataHandler::setSpeed(Speed_t newSpeed) {
 }
 
 void MotorDataHandler::handleEvent(unsigned char address, unsigned char data) {
+  /*
+  Serial.print(F("Received apacket for "));
+  Serial.print((uint8_t)address, DEC);
+  Serial.print(F(" with data 0x"));
+  Serial.print(data, BIN);
+  Serial.println(".");
+  */
   uint8_t pressed = data & 0x10;
   if (!pressed) {
     return;
@@ -74,7 +81,14 @@ void MotorDataHandler::handleEvent(unsigned char address, unsigned char data) {
   uint16_t turnout_address = (static_cast<uint16_t>(address) << 2) | data;
   // Possibly missing a warparound from 0 to 320. Then again, we can't handle
   // 320 in an unsigned char anyways.
-
+  if (address == 0) {
+    turnout_address += 320;
+  }
+  turnout_address -= 3;
+  /*
+  Serial.print("Decoded address: ");
+  Serial.println(turnout_address, DEC);
+  */
   if (turnout_address == directionAddress) {
     Serial.print(F("Setting Motor direction to "));
     if (gerade) {
@@ -87,12 +101,12 @@ void MotorDataHandler::handleEvent(unsigned char address, unsigned char data) {
   } else if (turnout_address == relayAddress) {
     if (gerade) {
       // make it go
-      Serial.print(F("Activating relay."));
-      Serial.print(F("Setting Motor speed to FULL."));
-      setSpeed(Speed_t::OFF);
+      Serial.println(F("Activating relay. Setting Motor speed to FULL."));
+      setSpeed(Speed_t::FULL);
+    } else {
+      Serial.println(F("Deactivating relay. Setting Motor speed to SLOW."));
+      setSpeed(Speed_t::SLOW);
     }
-
-    Serial.print(F("Setting Motor speed to "));
   }
 }
 
@@ -116,6 +130,7 @@ void MotorDataHandler::checkTimeout() {
 
   unsigned int now = millis();
   if (now - lastSpeedChange > kLowSpeedTimeout) {
+    Serial.println(F("Low Timeout expired. Setting Motor speed to OFF."));
     setSpeed(Speed_t::OFF);
   }
 }
